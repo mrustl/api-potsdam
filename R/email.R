@@ -161,8 +161,10 @@ smtp_url <- function(server, port = "465") {
 }
 
 # Split "a@x.de, B <b@y.de>" into single addresses ------------------------------
+# (commas within double quotes, e.g. "Doe, John" <j@x.de>, do not split)
 split_addresses <- function(x) {
-  x <- unlist(strsplit(paste(x, collapse = ","), ","))
+  x <- paste(x, collapse = ",")
+  x <- regmatches(x, gregexpr('(?:[^,"]|"[^"]*")+', x, perl = TRUE))[[1L]]
   x <- trimws(x)
   x[nzchar(x)]
 }
@@ -172,16 +174,29 @@ email_address <- function(x) {
   trimws(ifelse(grepl("<[^>]+>", x), sub("^.*<([^>]+)>.*$", "\\1", x), x))
 }
 
+# Strings as UTF-8. Strings of unknown encoding that are valid UTF-8 (e.g.
+# environment variables in a POSIX locale, as in cron jobs) are taken as UTF-8
+# instead of being mangled by enc2utf8()
+as_utf8 <- function(x) {
+  x <- as.character(x)
+  keep <- Encoding(x) != "latin1" & validUTF8(x)
+  utf8 <- x[keep]
+  Encoding(utf8) <- "UTF-8"
+  x[keep] <- utf8
+  x[!keep] <- enc2utf8(x[!keep])
+  x
+}
+
 # RFC 2047 encoded header value (only if it contains non-ASCII characters) ------
 encode_header <- function(x) {
-  x <- enc2utf8(x)
+  x <- as_utf8(x)
   if (!grepl("[^ -~]", x, useBytes = TRUE)) {
     return(x)
   }
   paste0("=?UTF-8?B?", jsonlite::base64_enc(charToRaw(x)), "?=")
 }
 
-# From header: encode the display name only -------------------------------------
+# From/To header: encode or quote the display name only -------------------------
 encode_address <- function(x) {
   if (!grepl("<[^>]+>", x)) {
     return(trimws(x))
@@ -191,7 +206,33 @@ encode_address <- function(x) {
   if (!nzchar(name)) {
     return(address)
   }
-  sprintf("%s <%s>", encode_header(name), address)
+  sprintf("%s <%s>", encode_display_name(name), address)
+}
+
+# Display name: RFC 2047 if non-ASCII, quoted if it contains special characters
+encode_display_name <- function(name) {
+  if (grepl("[^ -~]", name, useBytes = TRUE)) {
+    return(encode_header(sub('^"(.*)"$', "\\1", name)))
+  }
+  if (grepl('^".*"$', name) || !grepl('[()<>\\[\\]:;@\\\\,."]', name, perl = TRUE)) {
+    return(name)
+  }
+  sprintf('"%s"', gsub('(["\\\\])', "\\\\\\1", name))
+}
+
+# Message-ID header value (unique per message) ----------------------------------
+message_id <- function(from, time = Sys.time()) {
+  domain <- sub("^.*@", "", email_address(from))
+  if (!nzchar(domain) || identical(domain, email_address(from))) {
+    domain <- "api.potsdam.invalid"
+  }
+  sprintf(
+    "<%s.%d.%s@%s>",
+    format(as.POSIXct(time), "%Y%m%d%H%M%OS6", tz = "UTC"),
+    Sys.getpid(),
+    as.hexmode(sample.int(.Machine$integer.max, 1L)),
+    domain
+  )
 }
 
 # Date header in RFC 5322 format (independent of the locale) --------------------
@@ -211,7 +252,7 @@ format_email_date <- function(time = Sys.time()) {
 
 # Complete e-mail (headers and base64 encoded UTF-8 body) -----------------------
 format_email_message <- function(from, to, subject, body, time = Sys.time()) {
-  encoded <- jsonlite::base64_enc(charToRaw(enc2utf8(paste(body, collapse = "\n"))))
+  encoded <- jsonlite::base64_enc(charToRaw(as_utf8(paste(body, collapse = "\n"))))
   encoded <- gsub("\\s", "", encoded)
 
   # Lines of at most 76 characters
@@ -225,6 +266,7 @@ format_email_message <- function(from, to, subject, body, time = Sys.time()) {
   paste(
     c(
       paste0("Date: ", format_email_date(time)),
+      paste0("Message-ID: ", message_id(from, time)),
       paste0("From: ", encode_address(from)),
       paste0("To: ", paste(vapply(to, encode_address, ""), collapse = ", ")),
       paste0("Subject: ", encode_header(subject)),

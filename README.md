@@ -68,6 +68,13 @@ Sys.setenv(
 )
 send_test_email()
 
+# Nur per E-Mail
+check_appointments(
+  send_email_notification = TRUE,
+  state_file = "notified-appointments.txt"
+)
+
+# Per Pushover und E-Mail (Pushover-Variablen wie oben setzen)
 check_appointments(
   send_pushover_notification = TRUE,
   send_email_notification = TRUE,
@@ -144,7 +151,8 @@ Einrichtung:
    * `EMAIL_TO`: Empfänger, mehrere durch Kommas getrennt
 
    Sind beide Wege eingerichtet und schlägt nur einer fehl (z. B. ein
-   falsches SMTP-Passwort), kommt die Nachricht über den anderen trotzdem,
+   falsches SMTP-Passwort oder ein noch fehlendes Secret), kommt die
+   Nachricht über den anderen trotzdem,
    und zwar nur einmal. Der Lauf wird dann rot markiert, damit GitHub dich
    per Mail auf den Fehler hinweist.
 2. Optional, ebenfalls als **Secrets**, die Prüfung anpassen:

@@ -11,11 +11,12 @@
 #' `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM` and `EMAIL_TO`, see
 #' [send_email()].
 #'
-#' If both channels are used and only one of them fails, the appointments are
-#' still regarded as notified (no repeated messages on the working channel),
-#' a warning is given and the names of the failed channels are returned in
-#' the attribute `failed_channels`. If all channels fail, an error is raised
-#' and `state_file` is not changed, so that the notification is tried again.
+#' If both channels are used and only one of them fails (or is not set up
+#' completely, e.g. `EMAIL_TO` is missing), the appointments are still
+#' regarded as notified (no repeated messages on the working channel), a
+#' warning is given and the names of the failed channels are returned in the
+#' attribute `failed_channels`. If all channels fail, an error is raised and
+#' `state_file` is not changed, so that the notification is tried again.
 #'
 #' @inheritParams get_free_appointments
 #' @param send_pushover_notification should a Pushover notification be sent if
@@ -89,12 +90,24 @@ check_appointments <- function(
 {
   priority <- check_priority(priority)
 
+  # Settings of each enabled channel. Stop only if no enabled channel is set
+  # up, so that a channel that is not (yet) completely set up does not keep
+  # the other one from notifying.
+  config_errors <- list()
+
   if (send_pushover_notification) {
-    check_pushover_credentials()
+    config_errors$Pushover <- error_message(check_pushover_credentials())
   }
 
   if (send_email_notification) {
-    check_email_settings()
+    config_errors$`E-Mail` <- error_message(check_email_settings())
+  }
+
+  config_errors <- config_errors[!vapply(config_errors, is.null, logical(1L))]
+  n_enabled <- sum(send_pushover_notification, send_email_notification)
+
+  if (n_enabled > 0L && length(config_errors) == n_enabled) {
+    stop(paste(unlist(config_errors), collapse = " "), call. = FALSE)
   }
 
   appointments <- get_free_appointments(
@@ -141,7 +154,22 @@ check_appointments <- function(
         }
       }
 
+      # A channel that is not set up completely fails with its settings error
+      for (name in names(config_errors)) {
+        channels[[name]] <- local({
+          error <- config_errors[[name]]
+          function() stop(error, call. = FALSE)
+        })
+      }
+
       failed_channels <- send_notifications(channels, dbg = dbg)
+    } else if (length(config_errors) > 0L) {
+      warning(
+        "Notification channel not set up completely: ",
+        paste(sprintf("%s: %s", names(config_errors), unlist(config_errors)), collapse = "; "),
+        call. = FALSE
+      )
+      failed_channels <- names(config_errors)
     }
 
     if (!is.null(state_file)) {
@@ -151,6 +179,17 @@ check_appointments <- function(
 
   attr(appointments, "failed_channels") <- failed_channels
   appointments
+}
+
+# Message of the error raised by an expression, NULL if there is none ---------
+error_message <- function(expr) {
+  tryCatch(
+    {
+      expr
+      NULL
+    },
+    error = function(e) conditionMessage(e)
+  )
 }
 
 # Send a notification on every channel, independently of each other -------------

@@ -387,3 +387,69 @@ test_that("check_appointments() fails early without e-mail settings", {
   expect_error(check_appointments(send_email_notification = TRUE), "SMTP_SERVER")
   expect_false(called)
 })
+
+test_that("a channel that is not set up completely does not block the other one", {
+  local_pushover_credentials()
+  withr::local_envvar(SMTP_SERVER = "smtp.example.com", SMTP_USER = "me@example.com", EMAIL_TO = "")
+  sent <- list()
+  local_mocked_bindings(
+    get_free_appointments = function(...) fake_appointments(),
+    send_pushover = function(...) sent[[length(sent) + 1L]] <<- list(...),
+    send_email = function(...) stop("must not be called")
+  )
+  state_file <- withr::local_tempfile()
+
+  expect_warning(
+    result <- check_appointments(
+      send_pushover_notification = TRUE,
+      send_email_notification = TRUE,
+      state_file = state_file,
+      dbg = FALSE
+    ),
+    "E-Mail: E-mail settings missing.*EMAIL_TO"
+  )
+
+  expect_length(sent, 1L)
+  expect_identical(attr(result, "failed_channels"), "E-Mail")
+  expect_length(read_state(state_file), 2L)
+})
+
+test_that("an incomplete channel is reported even without new appointments", {
+  local_pushover_credentials()
+  withr::local_envvar(SMTP_SERVER = "smtp.example.com", SMTP_USER = "me@example.com", EMAIL_TO = "")
+  local_mocked_bindings(
+    get_free_appointments = function(...) empty_appointments(),
+    send_pushover = function(...) stop("must not be called")
+  )
+
+  expect_warning(
+    result <- check_appointments(
+      send_pushover_notification = TRUE,
+      send_email_notification = TRUE,
+      dbg = FALSE
+    ),
+    "not set up completely: E-Mail"
+  )
+  expect_identical(attr(result, "failed_channels"), "E-Mail")
+})
+
+test_that("check_appointments() stops early if no enabled channel is set up", {
+  withr::local_envvar(PUSHOVER_USER = "", PUSHOVER_APP = "", SMTP_SERVER = "", EMAIL_TO = "")
+  called <- FALSE
+  local_mocked_bindings(get_free_appointments = function(...) {
+    called <<- TRUE
+    empty_appointments()
+  })
+
+  expect_error(
+    check_appointments(send_pushover_notification = TRUE, send_email_notification = TRUE),
+    "Pushover credentials missing.*E-mail settings missing"
+  )
+  expect_false(called)
+})
+
+test_that("check_appointments() without notification has no failed channels", {
+  local_mocked_bindings(get_free_appointments = function(...) fake_appointments())
+  result <- check_appointments(dbg = FALSE)
+  expect_identical(attr(result, "failed_channels"), character(0L))
+})

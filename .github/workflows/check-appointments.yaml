@@ -128,8 +128,18 @@ jobs:
       - name: Send test notification
         if: ${{ inputs.test_notification }}
         run: |
-          if (Sys.getenv("SEND_PUSHOVER") == "true") api.potsdam::send_test_notification()
-          if (Sys.getenv("SEND_EMAIL") == "true") api.potsdam::send_test_email()
+          # Test every channel, even if the other one fails
+          errors <- character(0L)
+          test <- function(name, f) {
+            tryCatch(f(), error = function(e) {
+              errors <<- c(errors, paste0(name, ": ", conditionMessage(e)))
+            })
+          }
+          if (Sys.getenv("SEND_PUSHOVER") == "true") test("Pushover", api.potsdam::send_test_notification)
+          if (Sys.getenv("SEND_EMAIL") == "true") test("E-Mail", api.potsdam::send_test_email)
+          if (length(errors) > 0L) {
+            stop("Test notification failed: ", paste(errors, collapse = "; "), call. = FALSE)
+          }
         shell: Rscript {0}
 
       - name: Check for free appointments

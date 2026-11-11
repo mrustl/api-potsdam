@@ -183,3 +183,46 @@ test_that("curl_send_mail() turns errors of the subprocess into normal errors", 
     "smtp_server invalid"
   )
 })
+
+test_that("display names with special characters are quoted", {
+  expect_identical(encode_display_name("API Potsdam"), "API Potsdam")
+  expect_identical(encode_display_name("Rustler, Michael"), '"Rustler, Michael"')
+  expect_identical(encode_display_name("API Potsdam: Termine"), '"API Potsdam: Termine"')
+  expect_identical(encode_display_name('Say "hi"'), '"Say \\"hi\\""')
+  expect_identical(encode_display_name('"Doe, John"'), '"Doe, John"')
+  expect_match(encode_display_name("Jürgen, M."), "^=\\?UTF-8\\?B\\?.*\\?=$")
+  expect_identical(
+    encode_address("Rustler, Michael <me@example.com>"),
+    '"Rustler, Michael" <me@example.com>'
+  )
+})
+
+test_that("commas within quoted names do not split recipients", {
+  expect_identical(
+    split_addresses('"Doe, John" <j@x.de>, b@y.de'),
+    c('"Doe, John" <j@x.de>', "b@y.de")
+  )
+  expect_identical(email_address('"Doe, John" <j@x.de>'), "j@x.de")
+})
+
+test_that("messages have a unique Message-ID", {
+  time <- as.POSIXct("2026-11-11 06:05:09", tz = "UTC")
+  message <- format_email_message("API <me@example.com>", "a@x.de", "S", "B", time = time)
+  ids <- regmatches(message, regexpr("Message-ID: <[^>]+>", message))
+  expect_match(ids, "^Message-ID: <20261111060509[^@<>]*@example\\.com>$")
+  expect_false(identical(message_id("me@example.com"), message_id("me@example.com")))
+  expect_match(message_id("no-address"), "@api\\.potsdam\\.invalid>$")
+})
+
+test_that("as_utf8() keeps valid UTF-8 of unknown encoding", {
+  x <- rawToChar(as.raw(c(0x4a, 0xc3, 0xbc, 0x72, 0x67, 0x65, 0x6e)))
+  Encoding(x) <- "unknown"
+  y <- as_utf8(x)
+  expect_identical(charToRaw(y), charToRaw(x))
+  expect_identical(Encoding(y), "UTF-8")
+
+  latin1 <- rawToChar(as.raw(c(0x4a, 0xfc, 0x72, 0x67, 0x65, 0x6e)))
+  Encoding(latin1) <- "latin1"
+  expect_identical(charToRaw(as_utf8(latin1)), charToRaw(x))
+  expect_identical(as_utf8("plain"), "plain")
+})

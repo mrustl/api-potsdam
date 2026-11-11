@@ -83,11 +83,12 @@ are read from the environment variables \code{SMTP_SERVER}, \code{SMTP_PORT},
 \code{SMTP_USER}, \code{SMTP_PASSWORD}, \code{EMAIL_FROM} and \code{EMAIL_TO}, see
 \code{\link[=send_email]{send_email()}}.
 
-If both channels are used and only one of them fails, the appointments are
-still regarded as notified (no repeated messages on the working channel),
-a warning is given and the names of the failed channels are returned in
-the attribute \code{failed_channels}. If all channels fail, an error is raised
-and \code{state_file} is not changed, so that the notification is tried again.
+If both channels are used and only one of them fails (or is not set up
+completely, e.g. \code{EMAIL_TO} is missing), the appointments are still
+regarded as notified (no repeated messages on the working channel), a
+warning is given and the names of the failed channels are returned in the
+attribute \code{failed_channels}. If all channels fail, an error is raised and
+\code{state_file} is not changed, so that the notification is tried again.
 }
 \examples{
 \dontrun{
