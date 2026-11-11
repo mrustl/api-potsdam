@@ -189,3 +189,41 @@ test_that("send_test_notification() needs credentials", {
   withr::local_envvar(PUSHOVER_USER = "user-key", PUSHOVER_APP = "")
   expect_error(send_test_notification(), "PUSHOVER_APP")
 })
+
+test_that("check_priority() accepts -2 to 2, also as string", {
+  expect_identical(check_priority(2), 2L)
+  expect_identical(check_priority("2"), 2L)
+  expect_identical(check_priority(-2L), -2L)
+  expect_error(check_priority(3), "must be one of")
+  expect_error(check_priority(1.5), "must be one of")
+  expect_error(check_priority("high"), "must be one of")
+  expect_error(check_priority(""), "must be one of")
+  expect_error(check_priority(NA), "must be one of")
+  expect_error(check_priority(NULL), "must be one of")
+  expect_error(check_priority(c(1, 2)), "must be one of")
+})
+
+test_that("check_appointments() passes priority 2 and retry/expire on", {
+  local_pushover_credentials()
+  sent <- list()
+  local_mocked_bindings(
+    get_free_appointments = function(...) fake_appointments(),
+    send_pushover = function(...) sent[[length(sent) + 1L]] <<- list(...)
+  )
+
+  check_appointments(
+    send_pushover_notification = TRUE,
+    priority = "2",
+    retry = 120,
+    dbg = FALSE
+  )
+
+  expect_identical(sent[[1L]]$priority, 2L)
+  expect_identical(sent[[1L]]$retry, 120)
+
+  expect_error(
+    check_appointments(send_pushover_notification = TRUE, priority = 5, dbg = FALSE),
+    "must be one of"
+  )
+  expect_length(sent, 1L)
+})

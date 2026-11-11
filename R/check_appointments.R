@@ -20,9 +20,11 @@
 #'   was sent (or if there was nothing new to send). An appointment that
 #'   disappears and becomes free again is therefore reported again.
 #'   Default: `NULL` (notify about all free appointments on each call)
-#' @param priority Pushover message priority from -2 (lowest) to 2
-#'   (emergency, repeated until acknowledged). Default: 1 (high priority,
-#'   bypasses the quiet hours of the Pushover app)
+#' @param priority Pushover message priority from -2 (lowest) to 2. Default:
+#'   1 (high priority, bypasses the quiet hours of the Pushover app). With 2
+#'   (emergency) the notification is repeated every `retry` seconds (default:
+#'   60) until it is acknowledged in the Pushover app, for at most `expire`
+#'   seconds (default: 3600); `retry` and `expire` can be passed via `...`.
 #' @param dbg print debug messages? Default: `TRUE`
 #' @param ... further arguments passed to [pushoverr::pushover()], e.g.
 #'   `sound` or `device`
@@ -59,6 +61,8 @@ check_appointments <- function(
   ...
 )
 {
+  priority <- check_priority(priority)
+
   if (send_pushover_notification) {
     check_pushover_credentials()
   }
@@ -121,6 +125,7 @@ check_appointments <- function(
 #' send_test_notification()
 #' }
 send_test_notification <- function(priority = 0L, ...) {
+  priority <- check_priority(priority)
   check_pushover_credentials()
 
   send_pushover(
@@ -136,6 +141,27 @@ send_test_notification <- function(priority = 0L, ...) {
   )
 
   invisible(TRUE)
+}
+
+# Validate a Pushover priority (also given as string, e.g. from an env var) -----
+check_priority <- function(priority) {
+  value <- suppressWarnings(as.integer(priority))
+
+  if (
+    length(priority) != 1L ||
+      is.na(value) ||
+      !value %in% -2:2 ||
+      value != suppressWarnings(as.numeric(priority))
+  ) {
+    stop(
+      "'priority' must be one of -2, -1, 0, 1, 2 (got '",
+      paste(priority, collapse = ", "),
+      "').",
+      call. = FALSE
+    )
+  }
+
+  value
 }
 
 # Stop if the Pushover credentials are not set ---------------------------------

@@ -11,6 +11,11 @@
 #                           slug or samedi id (default: D)
 #   API_POTSDAM_INSURANCE:  health insurance (default: gesetzlich)
 #
+# Optional repository variable:
+#   API_POTSDAM_PRIORITY: Pushover priority, -2 to 2 (default: 1). With 2
+#                         (emergency) the notification repeats every 60 s
+#                         until acknowledged (for at most one hour).
+#
 # The logs and the job summary only show the number of free appointments.
 # The details are sent with Pushover.
 
@@ -44,6 +49,7 @@ jobs:
       PUSHOVER_APP: ${{ secrets.PUSHOVER_APP }}
       API_POTSDAM_EVENT_TYPE: ${{ secrets.API_POTSDAM_EVENT_TYPE || 'D' }}
       API_POTSDAM_INSURANCE: ${{ secrets.API_POTSDAM_INSURANCE || 'gesetzlich' }}
+      API_POTSDAM_PRIORITY: ${{ vars.API_POTSDAM_PRIORITY || '1' }}
       STATE_FILE: .state/notified-appointments.txt
       # UTF-8 locale, so that umlauts in messages and the job summary survive
       LANG: C.UTF-8
@@ -96,6 +102,7 @@ jobs:
             insurance = Sys.getenv("API_POTSDAM_INSURANCE"),
             send_pushover_notification = TRUE,
             state_file = state_file,
+            priority = Sys.getenv("API_POTSDAM_PRIORITY", "1"),
             dbg = FALSE
           )
 

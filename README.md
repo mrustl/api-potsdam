@@ -123,6 +123,14 @@ Einrichtung:
    Repositories für alle sichtbar sind. Der Workflow gibt dort nur die
    Anzahl freier Termine aus. Terminart, Uhrzeiten und Buchungslink stehen nur
    in der Pushover-Nachricht.
+
+   Optional unter *Variables* (Tab neben *Secrets*):
+   * `API_POTSDAM_PRIORITY`: Pushover-Priorität von `-2` bis `2`
+     (Standard: `1`, hoch, kommt auch in der Ruhezeit der Pushover-App
+     durch). Mit `2` (Notfall) wiederholt Pushover die Nachricht alle 60
+     Sekunden, bis du sie in der App bestätigst, höchstens eine Stunde lang.
+     Damit der Alarm auf dem iPhone auch bei stummgeschaltetem Telefon
+     klingelt, in der Pushover-App *Critical Alerts* erlauben.
 4. Den Workflow auf den Default-Branch (`main`) bringen. GitHub führt
    zeitgesteuerte Workflows nur von dort aus.
 5. Unter *Actions → check-appointments → Run workflow* einmal manuell

@@ -41,9 +41,11 @@ was sent (or if there was nothing new to send). An appointment that
 disappears and becomes free again is therefore reported again.
 Default: \code{NULL} (notify about all free appointments on each call)}
 
-\item{priority}{Pushover message priority from -2 (lowest) to 2
-(emergency, repeated until acknowledged). Default: 1 (high priority,
-bypasses the quiet hours of the Pushover app)}
+\item{priority}{Pushover message priority from -2 (lowest) to 2. Default:
+1 (high priority, bypasses the quiet hours of the Pushover app). With 2
+(emergency) the notification is repeated every \code{retry} seconds (default:
+60) until it is acknowledged in the Pushover app, for at most \code{expire}
+seconds (default: 3600); \code{retry} and \code{expire} can be passed via \code{...}.}
 
 \item{from}{first day to look for free appointments (default: today)}
 
