@@ -37,8 +37,9 @@
 <h2 class="pkg-version" data-toc-text="0.0.0.9000" id="apipotsdam-0009000">api.potsdam 0.0.0.9000<a class="anchor" aria-label="anchor" href="#apipotsdam-0009000"></a></h2>
 <ul><li>Check the samedi booking calendar of the API Potsdam for free appointments (<code><a href="../reference/get_free_appointments.html">get_free_appointments()</a></code>, <code><a href="../reference/get_event_types.html">get_event_types()</a></code>, <code><a href="../reference/get_times.html">get_times()</a></code>).</li>
 <li>Send Pushover notifications about new free appointments (<code><a href="../reference/check_appointments.html">check_appointments()</a></code>, <code><a href="../reference/send_test_notification.html">send_test_notification()</a></code>).</li>
-<li>GitHub Actions workflow <code>check-appointments</code> checking every 5 minutes. Default: appointment type “D” (statutory health insurance), configurable with repository secrets. Public logs only show the number of free appointments.</li>
+<li>GitHub Actions workflow <code>check-appointments</code> checking every 6 minutes. Default: appointment type “D” (statutory health insurance), configurable with repository secrets. Public logs only show the number of free appointments.</li>
 <li>Pushover priority configurable with the repository variable <code>API_POTSDAM_PRIORITY</code> (2 = emergency, repeated until acknowledged).</li>
+<li>E-mail notifications via SMTP (<code><a href="../reference/send_email.html">send_email()</a></code>, <code><a href="../reference/send_test_email.html">send_test_email()</a></code>, <code>check_appointments(send_email_notification = TRUE)</code>), e.g. with IONOS. If one of several channels fails, the others still notify (once).</li>
 </ul></div>
   </main></div>
 

@@ -68,7 +68,7 @@ appointments[, c("event_type", "time")]
 #> 2          D 2026-12-10 08:55:00
 ```
 
-*Stand: 11.11.2026, 06:41 Uhr*
+*Stand: 11.11.2026, 09:51 Uhr*
 
 ## Pushover-Benachrichtigung
 
@@ -93,6 +93,6 @@ check_appointments(
 )
 ```
 
-Für die regelmäßige Prüfung alle 5 Minuten siehe den
+Für die regelmäßige Prüfung alle 6 Minuten siehe den
 GitHub-Actions-Workflow `check-appointments` und die Anleitung in der
 README.

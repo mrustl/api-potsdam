@@ -3,9 +3,13 @@
 ## Check and notify
 
 - [`check_appointments()`](https://mrustl.github.io/api-potsdam/reference/check_appointments.md)
-  : Check for Free Appointments and Send a Pushover Notification
+  : Check for Free Appointments and Send Notifications
 - [`send_test_notification()`](https://mrustl.github.io/api-potsdam/reference/send_test_notification.md)
   : Send a Pushover Test Notification
+- [`send_email()`](https://mrustl.github.io/api-potsdam/reference/send_email.md)
+  : Send an E-Mail via SMTP
+- [`send_test_email()`](https://mrustl.github.io/api-potsdam/reference/send_test_email.md)
+  : Send a Test E-Mail
 
 ## Free appointments
 
