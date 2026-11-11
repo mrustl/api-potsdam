@@ -68,7 +68,7 @@ appointments[, c("event_type", "time")]
 #> 2          D 2026-12-10 08:55:00
 ```
 
-*Stand: 11.11.2026, 05:06 Uhr*
+*Stand: 11.11.2026, 06:41 Uhr*
 
 ## Pushover-Benachrichtigung
 
