@@ -7,7 +7,7 @@
 get_free_appointments(
   event_type = "D",
   insurance = "gesetzlich",
-  from = Sys.Date(),
+  from = today_berlin(),
   to = as.Date(from) + 365,
   config = api_potsdam_config()
 )
@@ -23,7 +23,8 @@ Default: "D"}
 \item{insurance}{health insurance ("Krankenversicherung"), see
 \code{\link[=insurances]{insurances()}}. Default: "gesetzlich"}
 
-\item{from}{first day to look for free appointments (default: today)}
+\item{from}{first day to look for free appointments (default: today in
+Potsdam, i.e. time zone "Europe/Berlin")}
 
 \item{to}{last day to look for free appointments (default: one year after
 \code{from})}

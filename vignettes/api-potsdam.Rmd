@@ -1,8 +1,8 @@
 ---
-title: "Freie Termine beim API Potsdam"
+title: "Freie Termine bei der API Potsdam"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Freie Termine beim API Potsdam}
+  %\VignetteIndexEntry{Freie Termine bei der API Potsdam}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

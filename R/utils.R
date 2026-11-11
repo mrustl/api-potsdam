@@ -62,3 +62,24 @@ escape_html <- function(x) {
   x <- gsub("<", "&lt;", x, fixed = TRUE)
   gsub(">", "&gt;", x, fixed = TRUE)
 }
+
+# Today in Potsdam (the booking calendar uses Berlin time) ----------------------
+today_berlin <- function() {
+  as.Date(Sys.time(), tz = "Europe/Berlin")
+}
+
+# The list "data" of a samedi API response, error if it is missing -------------
+check_data <- function(result, endpoint) {
+  if (!is.list(result) || !is.list(result$data)) {
+    stop(
+      sprintf(
+        "Unexpected response of the samedi API '%s' endpoint (no 'data' list): %s",
+        endpoint,
+        substr(paste(deparse(result), collapse = " "), 1L, 200L)
+      ),
+      call. = FALSE
+    )
+  }
+
+  result$data
+}

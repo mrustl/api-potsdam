@@ -230,7 +230,7 @@ get_event_types <- function(
     api_url = config$api_url
   )
 
-  types <- result$data
+  types <- check_data(result, "event_types")
 
   get_field <- function(field) {
     vapply(types, function(x) to_string(x[[field]]), character(1L))
@@ -256,7 +256,8 @@ get_event_types <- function(
 #'   [get_practice_ids()])
 #' @param insurance health insurance, see [insurances()] (default:
 #'   "gesetzlich")
-#' @param from first day to look for free appointments (default: today)
+#' @param from first day to look for free appointments (default: today in
+#'   Potsdam, i.e. time zone "Europe/Berlin")
 #' @param to last day to look for free appointments (default: one year after
 #'   `from`)
 #' @param config settings as returned by [api_potsdam_config()]
@@ -273,7 +274,7 @@ get_times <- function(
   event_type_id,
   event_category_id,
   insurance = "gesetzlich",
-  from = Sys.Date(),
+  from = today_berlin(),
   to = as.Date(from) + 365,
   config = api_potsdam_config()
 )
@@ -297,7 +298,19 @@ get_times <- function(
     api_url = config$api_url
   )
 
-  times <- vapply(result$data, function(x) to_string(x$time), character(1L))
+  times <- vapply(
+    check_data(result, "times"),
+    function(x) to_string(x$time),
+    character(1L)
+  )
+
+  # A changed response format must not look like "no free appointment"
+  if (anyNA(times)) {
+    stop(
+      "Unexpected response of the samedi API 'times' endpoint: entry without 'time'.",
+      call. = FALSE
+    )
+  }
 
   sort(unique(parse_samedi_time(times)))
 }

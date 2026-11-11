@@ -81,7 +81,8 @@ empty_appointments <- function() {
 #'   Default: "D"
 #' @param insurance health insurance ("Krankenversicherung"), see
 #'   [insurances()]. Default: "gesetzlich"
-#' @param from first day to look for free appointments (default: today)
+#' @param from first day to look for free appointments (default: today in
+#'   Potsdam, i.e. time zone "Europe/Berlin")
 #' @param to last day to look for free appointments (default: one year after
 #'   `from`)
 #' @param config settings as returned by [api_potsdam_config()]
@@ -101,7 +102,7 @@ empty_appointments <- function() {
 get_free_appointments <- function(
   event_type = "D",
   insurance = "gesetzlich",
-  from = Sys.Date(),
+  from = today_berlin(),
   to = as.Date(from) + 365,
   config = api_potsdam_config()
 )

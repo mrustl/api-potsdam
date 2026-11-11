@@ -84,3 +84,48 @@ test_that("get_free_appointments() returns zero rows if nothing is free", {
   expect_named(appointments, names(empty_appointments()))
   expect_s3_class(appointments$time, "POSIXct")
 })
+
+test_that("get_free_appointments() passes insurance, type and dates on", {
+  requests <- new.env()
+  local_mocked_bindings(samedi_get = fake_samedi_get(requests = requests))
+
+  appointments <- get_free_appointments(
+    event_type = "A",
+    insurance = "privat",
+    from = as.Date("2026-11-11"),
+    to = as.Date("2026-12-31")
+  )
+
+  calls <- requests$calls
+  expect_identical(calls[[2L]]$endpoint, "event_types")
+  expect_identical(calls[[2L]]$query$insurance_id, "private")
+
+  times_query <- calls[[3L]]$query
+  expect_identical(times_query$insurance_id, "private")
+  expect_identical(times_query$event_type_id, 489167L)
+  expect_identical(times_query$from, "2026-11-11")
+  expect_identical(times_query$to, "2026-12-31")
+
+  expect_identical(unique(appointments$event_type), "A")
+  expect_identical(unique(appointments$insurance), "privat")
+  expect_match(unique(appointments$booking_url), "/erstgesprach?insuranceId=private", fixed = TRUE)
+})
+
+test_that("get_free_appointments() queries and combines every type", {
+  requests <- new.env()
+  local_mocked_bindings(samedi_get = fake_samedi_get(requests = requests))
+
+  appointments <- get_free_appointments(event_type = c("A", "D"))
+
+  times_calls <- Filter(function(x) x$endpoint == "times", requests$calls)
+  expect_identical(
+    vapply(times_calls, function(x) x$query$event_type_id, integer(1L)),
+    c(489167L, 490648L)
+  )
+  expect_identical(nrow(appointments), 4L)
+  expect_identical(appointments$event_type, c("A", "A", "D", "D"))
+  expect_identical(
+    unique(appointments$booking_url),
+    c(booking_url("erstgesprach"), booking_url("sauglings-u-kleinkindsprechstunde-unter-3-jahre"))
+  )
+})

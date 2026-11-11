@@ -86,7 +86,7 @@ A bis C sowie E sind laut Buchungsseite für Kinder und Jugendliche bis unter
 |---|---|---|---|
 | `"A"` | Erstgespräch ausschließlich Privatpatient\*in / psychotherapeutische Privatsprechstunde / Diagnostik / Therapie / keine medikamentöse Behandlung | `490644` | `erstgesprach-psychotherapeutische-privatsprechstunde` |
 
-Für `"selbstzahler"` und `"berufsgenossenschaft"` bietet das API derzeit
+Für `"selbstzahler"` und `"berufsgenossenschaft"` bietet die API derzeit
 keine Online-Termine an. Weitere Schreibweisen für `insurance`: `"gkv"`,
 `"pkv"` oder eine numerische samedi-Versicherungs-Id.
 
@@ -117,7 +117,11 @@ Einrichtung:
      Am besten den Slug oder die samedi-Id aus `get_event_types()` verwenden
      statt des einzelnen Buchstabens, damit GitHub den Wert in den Logs
      zuverlässig mit `***` maskiert.
-   * `API_POTSDAM_INSURANCE`: z. B. `privat` (Standard: `gesetzlich`)
+   * `API_POTSDAM_INSURANCE`: Versicherung (Standard: `gesetzlich`).
+     Die Terminarten hängen von der Versicherung ab (siehe Tabelle oben).
+     Wer `privat` einträgt, muss auch `API_POTSDAM_EVENT_TYPE` setzen,
+     z. B. auf `erstgesprach-psychotherapeutische-privatsprechstunde`, sonst
+     schlägt jede Prüfung fehl, weil es D für privat nicht gibt.
 
    Secrets statt Variables, weil Logs und Job-Zusammenfassung öffentlicher
    Repositories für alle sichtbar sind. Der Workflow gibt dort nur die
@@ -131,11 +135,14 @@ Einrichtung:
      Sekunden, bis du sie in der App bestätigst, höchstens eine Stunde lang.
      Damit der Alarm auf dem iPhone auch bei stummgeschaltetem Telefon
      klingelt, in der Pushover-App *Critical Alerts* erlauben.
-4. Den Workflow auf den Default-Branch (`main`) bringen. GitHub führt
-   zeitgesteuerte Workflows nur von dort aus.
+4. Den Workflow auf den Default-Branch bringen. GitHub führt
+   zeitgesteuerte Workflows nur dort aus, und der Workflow prüft auch bei
+   manuellem Start nur dort. Solange die Pushover-Secrets fehlen, wird die
+   Prüfung mit einer Warnung übersprungen.
 5. Unter *Actions → check-appointments → Run workflow* einmal manuell
-   starten. Mit der Option *test_notification* wird zusätzlich eine
-   Testnachricht geschickt, damit du siehst, dass Pushover funktioniert.
+   starten. Mit dem Haken bei *Zuerst eine Pushover-Testnachricht senden*
+   kommt zusätzlich eine Testnachricht, damit du siehst, dass Pushover
+   funktioniert.
 
 Gut zu wissen:
 
@@ -151,6 +158,4 @@ Gut zu wissen:
 
 ## Dokumentation
 
-Release: [https://mrustl.github.io/api-potsdam](https://mrustl.github.io/api-potsdam)
-
-Development: [https://mrustl.github.io/api-potsdam/dev](https://mrustl.github.io/api-potsdam/dev)
+[https://mrustl.github.io/api-potsdam](https://mrustl.github.io/api-potsdam)

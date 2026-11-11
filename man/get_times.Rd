@@ -8,7 +8,7 @@ get_times(
   event_type_id,
   event_category_id,
   insurance = "gesetzlich",
-  from = Sys.Date(),
+  from = today_berlin(),
   to = as.Date(from) + 365,
   config = api_potsdam_config()
 )
@@ -23,7 +23,8 @@ get_times(
 \item{insurance}{health insurance, see \code{\link[=insurances]{insurances()}} (default:
 "gesetzlich")}
 
-\item{from}{first day to look for free appointments (default: today)}
+\item{from}{first day to look for free appointments (default: today in
+Potsdam, i.e. time zone "Europe/Berlin")}
 
 \item{to}{last day to look for free appointments (default: one year after
 \code{from})}

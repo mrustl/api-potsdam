@@ -54,7 +54,7 @@ check_appointments <- function(
   send_pushover_notification = FALSE,
   state_file = NULL,
   priority = 1L,
-  from = Sys.Date(),
+  from = today_berlin(),
   to = as.Date(from) + 365,
   config = api_potsdam_config(),
   dbg = TRUE,
@@ -130,7 +130,7 @@ send_test_notification <- function(priority = 0L, ...) {
 
   send_pushover(
     message = paste(
-      "Test: Pushover-Benachrichtigungen \u00fcber freie Termine beim",
+      "Test: Pushover-Benachrichtigungen \u00fcber freie Termine bei der",
       "API Potsdam sind eingerichtet."
     ),
     title = "API Potsdam: Testnachricht",
@@ -182,9 +182,13 @@ check_pushover_credentials <- function() {
   invisible(TRUE)
 }
 
-# Send a Pushover message (wrapper, so that it can be mocked in tests) ----------
-send_pushover <- function(...) {
-  pushoverr::pushover(...)
+# Send a Pushover message ------------------------------------------------------
+# pushoverr::pushover() passes message and title through glue::glue(), which
+# would evaluate "{...}" (e.g. in appointment type names set by the clinic) as
+# R code. Doubled braces are turned back into single braces by glue.
+send_pushover <- function(message, title = NULL, ...) {
+  escape_glue <- function(x) if (is.null(x)) x else gsub("([{}])", "\\1\\1", x)
+  pushoverr::pushover(message = escape_glue(message), title = escape_glue(title), ...)
 }
 
 # Unique identifiers of appointments (stored in the state file) ----------------
@@ -262,25 +266,44 @@ format_notification <- function(appointments, max_times = 10L) {
     levels = unique(appointments$event_type_name)
   ))
 
-  blocks <- vapply(groups, function(group) {
-    times <- format_time_de(sort(group$time))
-    more <- length(times) - max_times
+  format_message <- function(max_times) {
+    blocks <- vapply(groups, function(group) {
+      times <- format_time_de(sort(group$time))
+      more <- length(times) - max_times
 
-    if (more > 0L) {
-      times <- c(times[seq_len(max_times)], sprintf("... und %d weitere", more))
-    }
+      if (more > 0L) {
+        times <- c(
+          times[seq_len(max_times)],
+          if (max_times == 0L) {
+            sprintf("%d Termin%s", more, if (more == 1L) "" else "e")
+          } else {
+            sprintf("... und %d weitere", more)
+          }
+        )
+      }
 
-    paste0(
-      "<b>", escape_html(group$event_type_name[1L]), "</b> (",
-      escape_html(group$insurance[1L]), ")\n",
-      paste0("- ", times, collapse = "\n")
-    )
-  }, character(1L))
+      paste0(
+        "<b>", escape_html(group$event_type_name[1L]), "</b> (",
+        escape_html(group$insurance[1L]), ")\n",
+        paste0("- ", times, collapse = "\n")
+      )
+    }, character(1L))
 
-  message <- paste(blocks, collapse = "\n\n")
+    paste(blocks, collapse = "\n\n")
+  }
 
-  # Pushover limits messages to 1024 characters. Remove the formatting before
-  # truncating so that no HTML tag is cut in half.
+  # Pushover limits messages to 1024 characters: show fewer times per
+  # appointment type until the message fits, so that every type is mentioned
+  max_times <- max(0L, as.integer(max_times))
+  message <- format_message(max_times)
+
+  while (nchar(message) > 1024L && max_times > 0L) {
+    max_times <- max_times - 1L
+    message <- format_message(max_times)
+  }
+
+  # Last resort (very long names): remove the formatting, so that no HTML tag
+  # is cut in half, and truncate
   if (nchar(message) > 1024L) {
     message <- gsub("</?b>", "", message)
     message <- paste0(substr(message, 1L, 1000L), "\n...")

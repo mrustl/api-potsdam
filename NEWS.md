@@ -8,3 +8,5 @@
   Default: appointment type "D" (statutory health insurance), configurable
   with repository secrets. Public logs only show the number of free
   appointments.
+* Pushover priority configurable with the repository variable
+  `API_POTSDAM_PRIORITY` (2 = emergency, repeated until acknowledged).

@@ -227,3 +227,71 @@ test_that("check_appointments() passes priority 2 and retry/expire on", {
   )
   expect_length(sent, 1L)
 })
+
+test_that("check_appointments() passes its settings to get_free_appointments()", {
+  args <- NULL
+  local_mocked_bindings(get_free_appointments = function(...) {
+    args <<- list(...)
+    empty_appointments()
+  })
+
+  check_appointments(
+    event_type = c("A", "D"),
+    insurance = "privat",
+    from = as.Date("2026-11-11"),
+    to = as.Date("2026-12-31"),
+    dbg = FALSE
+  )
+
+  expect_identical(args$event_type, c("A", "D"))
+  expect_identical(args$insurance, "privat")
+  expect_identical(args$from, as.Date("2026-11-11"))
+  expect_identical(args$to, as.Date("2026-12-31"))
+})
+
+test_that("send_pushover() protects braces from glue in pushoverr", {
+  sent <- NULL
+  local_mocked_bindings(
+    pushover = function(message, title = NULL, ...) {
+      sent <<- list(message = message, title = title, ...)
+    },
+    .package = "pushoverr"
+  )
+
+  send_pushover(message = "D. Test {Sys.getenv('PUSHOVER_APP')}", title = "{1 + 1}", priority = 1L)
+
+  expect_identical(sent$message, "D. Test {{Sys.getenv('PUSHOVER_APP')}}")
+  expect_identical(sent$title, "{{1 + 1}}")
+  expect_identical(sent$priority, 1L)
+  # glue (used inside pushoverr::pushover()) restores the original text
+  expect_identical(
+    as.character(glue::glue(sent$message)),
+    "D. Test {Sys.getenv('PUSHOVER_APP')}"
+  )
+
+  send_pushover(message = "no title")
+  expect_null(sent$title)
+})
+
+test_that("format_notification() mentions every type even if many are free", {
+  times <- format(
+    as.POSIXct("2026-12-01 09:00", tz = "Europe/Berlin") + (0:11) * 86400,
+    "%Y-%m-%dT%H:%M:%S%z"
+  )
+  many <- do.call(rbind, lapply(LETTERS[1:5], function(letter) {
+    x <- fake_appointments(times = times)
+    x$event_type <- letter
+    x$event_type_name <- paste0(letter, ". ", strrep("Lange Bezeichnung der Terminart ", 3L))
+    x$booking_url <- booking_url(tolower(letter))
+    x
+  }))
+
+  notification <- format_notification(many)
+
+  expect_identical(notification$title, "API Potsdam: 60 freie Termine")
+  expect_lte(nchar(notification$message), 1024L)
+  for (letter in LETTERS[1:5]) {
+    expect_match(notification$message, paste0("<b>", letter, ". "), fixed = TRUE)
+  }
+  expect_match(notification$message, "12 Termine|weitere")
+})

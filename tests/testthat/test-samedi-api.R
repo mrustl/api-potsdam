@@ -194,3 +194,52 @@ test_that("get_times() validates the date range", {
   expect_error(get_times(1L, 2L, from = "2026-12-01", to = "2026-11-01"), "from <= to")
   expect_error(get_times(1L, 2L, from = NA), "from <= to")
 })
+
+test_that("get_times() fails on an unexpected response instead of returning nothing", {
+  local_mocked_bindings(samedi_get = function(endpoint, ...) {
+    list(times = list(list(time = "2026-12-03T08:55:00+01:00")))
+  })
+  expect_error(get_times(490648L, 188822L), "no 'data' list")
+
+  local_mocked_bindings(samedi_get = function(endpoint, ...) {
+    list(error = "something went wrong")
+  })
+  expect_error(get_times(490648L, 188822L), "no 'data' list")
+
+  local_mocked_bindings(samedi_get = function(endpoint, ...) {
+    list(data = list(
+      list(start = "2026-12-03T08:55:00+01:00"),
+      list(time = "2026-12-10T08:55:00+01:00")
+    ))
+  })
+  expect_error(get_times(490648L, 188822L), "entry without 'time'")
+})
+
+test_that("get_event_types() fails on an unexpected response", {
+  local_mocked_bindings(samedi_get = function(endpoint, ...) {
+    if (endpoint == "practices/slug_to_id") read_fixture("slug_to_id") else list(types = list())
+  })
+  expect_error(get_event_types(), "'event_types' endpoint")
+})
+
+test_that("get_times() sorts and removes duplicate times", {
+  local_mocked_bindings(samedi_get = function(endpoint, ...) {
+    list(data = list(
+      list(time = "2026-12-10T08:55:00+01:00"),
+      list(time = "2026-12-03T08:55:00+01:00"),
+      list(time = "2026-12-10T08:55:00+01:00")
+    ))
+  })
+
+  times <- get_times(490648L, 188822L)
+
+  expect_identical(
+    format(times, "%Y-%m-%d %H:%M"),
+    c("2026-12-03 08:55", "2026-12-10 08:55")
+  )
+})
+
+test_that("today_berlin() is today in Potsdam", {
+  expect_s3_class(today_berlin(), "Date")
+  expect_identical(today_berlin(), as.Date(format(Sys.time(), tz = "Europe/Berlin")))
+})

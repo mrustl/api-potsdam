@@ -10,7 +10,7 @@ check_appointments(
   send_pushover_notification = FALSE,
   state_file = NULL,
   priority = 1L,
-  from = Sys.Date(),
+  from = today_berlin(),
   to = as.Date(from) + 365,
   config = api_potsdam_config(),
   dbg = TRUE,
@@ -47,7 +47,8 @@ Default: \code{NULL} (notify about all free appointments on each call)}
 60) until it is acknowledged in the Pushover app, for at most \code{expire}
 seconds (default: 3600); \code{retry} and \code{expire} can be passed via \code{...}.}
 
-\item{from}{first day to look for free appointments (default: today)}
+\item{from}{first day to look for free appointments (default: today in
+Potsdam, i.e. time zone "Europe/Berlin")}
 
 \item{to}{last day to look for free appointments (default: one year after
 \code{from})}
