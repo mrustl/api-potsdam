@@ -24,7 +24,7 @@ name: check-appointments
 on:
   schedule:
     # every 5 minutes, the minimum GitHub allows (runs may start some minutes late)
-    - cron: '*/5 * * * *'
+    - cron: '3-59/6 * * * *'
   workflow_dispatch:
     inputs:
       test_notification:
