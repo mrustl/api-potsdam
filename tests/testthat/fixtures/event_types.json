@@ -1,0 +1,377 @@
+{
+  "data": [
+    {
+      "id": 489167,
+      "name": "A. Erstgespräch / psychotherapeutische Sprechstunde / Wiedervorstellungen ",
+      "slug": "erstgesprach",
+      "comment_form": [
+        {
+          "name": "Vorname und Nachname Patient/in:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Geburtsdatum Patient/in:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Straße, Hausnummer der Erziehungsberechtigten Person:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "PLZ, Ort der Erziehungsberechtigten Person:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Bitte geben Sie den Grund für Ihre Anmeldung an:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Bei welcher Krankenkasse",
+          "required": true,
+          "type": "textfield",
+          "config": {
+            "emptyText": ""
+          }
+        },
+        {
+          "name": "War das vorzustellende Kind in den letzten 12 Monaten bereits in der API?",
+          "required": true,
+          "type": "textfield",
+          "config": {
+            "emptyText": ""
+          }
+        }
+      ],
+      "attendant_user_required": false,
+      "description": "<p>für Kinder und Jugendliche bis unter 21 Jahren<br>\nBei Aufmerksamkeits- und Konzentrationsproblemen, ADS/ ADHS nutzen Sie bitte die Spezialsprechstunde.</p>\n",
+      "is_video_consultation": false,
+      "total_price": null,
+      "currency": "EUR",
+      "patient_can_book_without_account": true,
+      "key_values": [],
+      "asap_list_enabled": true,
+      "location": {
+        "name": "Akademie für Psychotherapie und Interventionsforschung GmbH",
+        "street": "Friedrich-Ebert-Strasse 112",
+        "zip": "14467",
+        "city": "Potsdam",
+        "country": "DE",
+        "latitude": 52.398275,
+        "longitude": 13.0577838,
+        "phone": "0331-647212-0",
+        "fax": "0331-647212-425",
+        "opening_hours": ""
+      },
+      "show_in_samedi_doctor_search": true
+    },
+    {
+      "id": 490647,
+      "name": "B. Erstgespräch / Spezialsprechstunde für Aufmerksamkeits- und Konzentrationsprobleme, ADS, ADHS",
+      "slug": "diagnostik-ads-adhs",
+      "comment_form": [
+        {
+          "name": "Vorname und Nachname Patient/in:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Geburtsdatum Patient/in:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Straße, Hausnummer der Erziehungsberechtigten Person:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "PLZ, Ort der Erziehungsberechtigten Person:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Bitte geben Sie den Grund für Ihre Anmeldung an:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Bei welcher Krankenkasse",
+          "required": true,
+          "type": "textfield",
+          "config": {
+            "emptyText": ""
+          }
+        },
+        {
+          "name": "War das vorzustellende Kind in den letzten 12 Monaten bereits in der API?",
+          "required": true,
+          "type": "textfield",
+          "config": {
+            "emptyText": ""
+          }
+        }
+      ],
+      "attendant_user_required": false,
+      "description": "<p>für Kinder und Jugendliche bis unter 21 Jahren<br>\nDiagnostik und - bei Indikation - Therapie&nbsp;&nbsp;</p>\n",
+      "is_video_consultation": false,
+      "total_price": null,
+      "currency": "EUR",
+      "patient_can_book_without_account": true,
+      "key_values": [],
+      "asap_list_enabled": true,
+      "location": {
+        "name": "Akademie für Psychotherapie und Interventionsforschung GmbH",
+        "street": "Friedrich-Ebert-Strasse 112",
+        "zip": "14467",
+        "city": "Potsdam",
+        "country": "DE",
+        "latitude": 52.398275,
+        "longitude": 13.0577838,
+        "phone": "0331-647212-0",
+        "fax": "0331-647212-425",
+        "opening_hours": ""
+      },
+      "show_in_samedi_doctor_search": true
+    },
+    {
+      "id": 490646,
+      "name": "C. Diagnostik für Teilleistungsstörung (Lese-Rechtschreib-Störung, Dyskalkulie) / Wiedervorstellung mit erneuter Diagnostik ",
+      "slug": "diagnostik-gkv",
+      "comment_form": [
+        {
+          "name": "Vorname und Nachname Patient/in:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Geburtsdatum Patient/in:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Straße, Hausnummer der Erziehungsberechtigten Person:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "PLZ, Ort der Erziehungsberechtigten Person:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Bitte geben Sie den Grund für Ihre Anmeldung an:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Bei welcher Krankenkasse",
+          "required": true,
+          "type": "textfield",
+          "config": {
+            "emptyText": ""
+          }
+        },
+        {
+          "name": "War das vorzustellende Kind in den letzten 12 Monaten bereits in der API?",
+          "required": true,
+          "type": "textfield",
+          "config": {
+            "emptyText": ""
+          }
+        }
+      ],
+      "attendant_user_required": false,
+      "description": "<p><strong>Ausschließlich Diagnostik von Teilleistungsstörung,</strong> <strong>keine Therapie</strong>&nbsp; -&nbsp; für Kinder und Jugendliche bis unter 21 Jahren&nbsp;</p>\n\n<p>Bestehen überdies weitere Auffälligkeiten (z.B. Verhaltensauffälligkeiten, Ängste oder emotionale Probleme) oder wird die Aufnahme einer Psychotherapie angestrebt,&nbsp;wählen Sie bitte bei der Online-Buchung die Terminart&nbsp;<strong>Erstgespräch / psychotherapeutische Sprechstunde</strong>&nbsp;</p>\n",
+      "is_video_consultation": false,
+      "total_price": null,
+      "currency": "EUR",
+      "patient_can_book_without_account": true,
+      "key_values": [],
+      "asap_list_enabled": true,
+      "location": {
+        "name": "Akademie für Psychotherapie und Interventionsforschung GmbH",
+        "street": "Friedrich-Ebert-Strasse 112",
+        "zip": "14467",
+        "city": "Potsdam",
+        "country": "DE",
+        "latitude": 52.398275,
+        "longitude": 13.0577838,
+        "phone": "0331-647212-0",
+        "fax": "0331-647212-425",
+        "opening_hours": ""
+      },
+      "show_in_samedi_doctor_search": true
+    },
+    {
+      "id": 490648,
+      "name": "D. Säuglings- u. Kleinkindsprechstunde (unter 3 Jahre)",
+      "slug": "sauglings-u-kleinkindsprechstunde-unter-3-jahre",
+      "comment_form": [
+        {
+          "name": "Vorname und Nachname Patient/in:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Geburtsdatum Patient/in:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Straße, Hausnummer der Erziehungsberechtigten Person:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "PLZ, Ort der Erziehungsberechtigten Person:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Bitte geben Sie den Grund für Ihre Anmeldung an:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Bei welcher Krankenkasse",
+          "required": true,
+          "type": "textfield",
+          "config": {
+            "emptyText": ""
+          }
+        },
+        {
+          "name": "War das vorzustellende Kind in den letzten 12 Monaten bereits in der API?",
+          "required": true,
+          "type": "textfield",
+          "config": {
+            "emptyText": ""
+          }
+        }
+      ],
+      "attendant_user_required": false,
+      "description": "",
+      "is_video_consultation": false,
+      "total_price": null,
+      "currency": "EUR",
+      "patient_can_book_without_account": true,
+      "key_values": [],
+      "asap_list_enabled": true,
+      "location": {
+        "name": "Akademie für Psychotherapie und Interventionsforschung GmbH",
+        "street": "Friedrich-Ebert-Strasse 112",
+        "zip": "14467",
+        "city": "Potsdam",
+        "country": "DE",
+        "latitude": 52.398275,
+        "longitude": 13.0577838,
+        "phone": "0331-647212-0",
+        "fax": "0331-647212-425",
+        "opening_hours": ""
+      },
+      "show_in_samedi_doctor_search": true
+    },
+    {
+      "id": 490645,
+      "name": "E. Krisenvorstellung (Klinikanschluss, Klinikbefunde bitte mitbringen)",
+      "slug": "krisenvorstellung-gkv",
+      "comment_form": [
+        {
+          "name": "Vorname und Nachname Patient/in:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Geburtsdatum Patient/in:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Straße, Hausnummer der Erziehungsberechtigten Person:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "PLZ, Ort der Erziehungsberechtigten Person:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Bitte geben Sie den Grund für Ihre Anmeldung an:",
+          "required": true,
+          "type": "textfield",
+          "config": null
+        },
+        {
+          "name": "Bei welcher Krankenkasse",
+          "required": true,
+          "type": "textfield",
+          "config": {
+            "emptyText": ""
+          }
+        },
+        {
+          "name": "War das vorzustellende Kind in den letzten 12 Monaten bereits in der API?",
+          "required": true,
+          "type": "textfield",
+          "config": {
+            "emptyText": ""
+          }
+        }
+      ],
+      "attendant_user_required": false,
+      "description": "<p>für Kinder und Jugendliche bis unter 21 Jahren</p>\n",
+      "is_video_consultation": false,
+      "total_price": null,
+      "currency": "EUR",
+      "patient_can_book_without_account": true,
+      "key_values": [],
+      "asap_list_enabled": true,
+      "location": {
+        "name": "Akademie für Psychotherapie und Interventionsforschung GmbH",
+        "street": "Friedrich-Ebert-Strasse 112",
+        "zip": "14467",
+        "city": "Potsdam",
+        "country": "DE",
+        "latitude": 52.398275,
+        "longitude": 13.0577838,
+        "phone": "0331-647212-0",
+        "fax": "0331-647212-425",
+        "opening_hours": ""
+      },
+      "show_in_samedi_doctor_search": true
+    }
+  ],
+  "scope": "limited",
+  "event_category_id": "188822",
+  "tagged": null
+}

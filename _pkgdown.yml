@@ -1,0 +1,30 @@
+url: https://mrustl.github.io/api-potsdam/
+authors:
+  Michael Rustler:
+    href: https://mrustl.de
+template:
+  bootstrap: 5
+  bootswatch: cerulean
+  bslib:
+    bg: '#ffffff'
+    fg: '#000000'
+    primary: '#007aff'
+    border-radius: 0.5rem
+    btn-border-radius: 0.25rem
+reference:
+  - title: Check and notify
+    contents:
+      - check_appointments
+      - send_test_notification
+  - title: Free appointments
+    contents:
+      - get_free_appointments
+      - get_event_types
+      - get_times
+      - get_practice_ids
+  - title: Settings
+    contents:
+      - api_potsdam_config
+      - booking_url
+      - insurances
+      - samedi_widget_config

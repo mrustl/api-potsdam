@@ -1,0 +1,35 @@
+Package: api.potsdam
+Title: Pushover Notifications for Free Appointments at the API Potsdam
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Michael", "Rustler", , "michael.rustler@kompetenz-wasser.de", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-0647-7726")),
+    person("Michael Rustler", role = "cph")
+  )
+Description: Checks the public online booking calendar (samedi) of the
+    outpatient clinic of the 'Akademie fuer Psychotherapie und
+    Interventionsforschung' (API) in Potsdam for free appointments of a
+    given appointment type and health insurance and sends a 'Pushover'
+    notification as soon as appointments are available.
+License: MIT + file LICENSE
+URL: https://github.com/mrustl/api-potsdam,
+    https://mrustl.github.io/api-potsdam/
+BugReports: https://github.com/mrustl/api-potsdam/issues
+Depends:
+    R (>= 4.1.0)
+Imports:
+    httr,
+    jsonlite,
+    pushoverr
+Suggests:
+    glue,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.1.7),
+    withr
+VignetteBuilder:
+    knitr
+Config/testthat/edition: 3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.1
