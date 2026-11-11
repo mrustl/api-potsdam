@@ -1,9 +1,18 @@
 # Checks the booking calendar of the API Potsdam for free appointments and
-# sends a Pushover notification about new ones.
+# sends a Pushover notification and/or an e-mail about new ones.
 #
-# Required repository secrets (Settings -> Secrets and variables -> Actions):
+# Repository secrets (Settings -> Secrets and variables -> Actions) for
+# Pushover:
 #   PUSHOVER_USER: Pushover user key
 #   PUSHOVER_APP:  API token of a Pushover application
+#
+# and/or for e-mail (e.g. IONOS):
+#   SMTP_SERVER:   e.g. smtp.ionos.de
+#   SMTP_PORT:     optional, 465 (SSL/TLS, default) or 587 (STARTTLS)
+#   SMTP_USER:     login, e.g. the e-mail address
+#   SMTP_PASSWORD: password
+#   EMAIL_FROM:    optional sender (default: SMTP_USER)
+#   EMAIL_TO:      recipient(s), comma separated
 #
 # Optional repository secrets (kept as secrets, so that the public workflow
 # logs do not show what is checked):
@@ -17,18 +26,18 @@
 #                         until acknowledged (for at most one hour).
 #
 # The logs and the job summary only show the number of free appointments.
-# The details are sent with Pushover.
+# The details are sent with Pushover or by e-mail.
 
 name: check-appointments
 
 on:
   schedule:
-    # every 5 minutes, the minimum GitHub allows (runs may start some minutes late)
+    # every 6 minutes, not at the full hour (runs may start some minutes late)
     - cron: '3-59/6 * * * *'
   workflow_dispatch:
     inputs:
       test_notification:
-        description: 'Zuerst eine Pushover-Testnachricht senden'
+        description: 'Zuerst eine Testnachricht senden (Pushover und/oder E-Mail)'
         type: boolean
         default: false
 
@@ -40,38 +49,52 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Skip the check (with a warning instead of a failure every 5 minutes) as
-  # long as the Pushover secrets are not set up. Only run on the default
+  # Skip the check (with a warning instead of a failure every few minutes) as
+  # long as neither Pushover nor e-mail is set up. Only run on the default
   # branch: scheduled runs always do, and the state of notified appointments
   # is only shared within the cache scope of the default branch.
   configuration:
     if: github.event_name == 'schedule' || github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-24.04
     outputs:
-      pushover: ${{ steps.pushover.outputs.configured }}
+      pushover: ${{ steps.channels.outputs.pushover }}
+      email: ${{ steps.channels.outputs.email }}
     steps:
-      - name: Check Pushover secrets
-        id: pushover
+      - name: Check notification secrets
+        id: channels
         env:
           PUSHOVER_USER: ${{ secrets.PUSHOVER_USER }}
           PUSHOVER_APP: ${{ secrets.PUSHOVER_APP }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
         run: |
-          if [ -n "$PUSHOVER_USER" ] || [ -n "$PUSHOVER_APP" ]; then
-            echo "configured=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::Repository secrets PUSHOVER_USER and PUSHOVER_APP are not set, no check. See README."
-            echo "configured=false" >> "$GITHUB_OUTPUT"
+          pushover=false
+          email=false
+          if [ -n "$PUSHOVER_USER" ] || [ -n "$PUSHOVER_APP" ]; then pushover=true; fi
+          if [ -n "$SMTP_SERVER" ] || [ -n "$EMAIL_TO" ]; then email=true; fi
+          if [ "$pushover" = false ] && [ "$email" = false ]; then
+            echo "::warning::Neither Pushover (PUSHOVER_USER, PUSHOVER_APP) nor e-mail (SMTP_SERVER, EMAIL_TO, ...) secrets are set, no check. See README."
           fi
+          echo "pushover=$pushover" >> "$GITHUB_OUTPUT"
+          echo "email=$email" >> "$GITHUB_OUTPUT"
 
   check-appointments:
     needs: configuration
-    if: needs.configuration.outputs.pushover == 'true'
+    if: needs.configuration.outputs.pushover == 'true' || needs.configuration.outputs.email == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     env:
       PUSHOVER_USER: ${{ secrets.PUSHOVER_USER }}
       PUSHOVER_APP: ${{ secrets.PUSHOVER_APP }}
+      SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+      EMAIL_TO: ${{ secrets.EMAIL_TO }}
+      SEND_PUSHOVER: ${{ needs.configuration.outputs.pushover }}
+      SEND_EMAIL: ${{ needs.configuration.outputs.email }}
       API_POTSDAM_EVENT_TYPE: ${{ secrets.API_POTSDAM_EVENT_TYPE || 'D' }}
       API_POTSDAM_INSURANCE: ${{ secrets.API_POTSDAM_INSURANCE || 'gesetzlich' }}
       API_POTSDAM_PRIORITY: ${{ vars.API_POTSDAM_PRIORITY || '1' }}
@@ -104,7 +127,19 @@ jobs:
 
       - name: Send test notification
         if: ${{ inputs.test_notification }}
-        run: api.potsdam::send_test_notification()
+        run: |
+          # Test every channel, even if the other one fails
+          errors <- character(0L)
+          test <- function(name, f) {
+            tryCatch(f(), error = function(e) {
+              errors <<- c(errors, paste0(name, ": ", conditionMessage(e)))
+            })
+          }
+          if (Sys.getenv("SEND_PUSHOVER") == "true") test("Pushover", api.potsdam::send_test_notification)
+          if (Sys.getenv("SEND_EMAIL") == "true") test("E-Mail", api.potsdam::send_test_email)
+          if (length(errors) > 0L) {
+            stop("Test notification failed: ", paste(errors, collapse = "; "), call. = FALSE)
+          }
         shell: Rscript {0}
 
       - name: Check for free appointments
@@ -119,7 +154,8 @@ jobs:
           appointments <- api.potsdam::check_appointments(
             event_type = trimws(strsplit(Sys.getenv("API_POTSDAM_EVENT_TYPE"), ",")[[1L]]),
             insurance = Sys.getenv("API_POTSDAM_INSURANCE"),
-            send_pushover_notification = TRUE,
+            send_pushover_notification = Sys.getenv("SEND_PUSHOVER") == "true",
+            send_email_notification = Sys.getenv("SEND_EMAIL") == "true",
             state_file = state_file,
             priority = Sys.getenv("API_POTSDAM_PRIORITY", "1"),
             dbg = FALSE
@@ -131,7 +167,7 @@ jobs:
             "%d free appointment(s), %d new%s",
             nrow(appointments),
             n_new,
-            if (n_new > 0L) " (Pushover notification sent)" else ""
+            if (n_new > 0L) " (notification sent)" else ""
           ))
 
           # Save the state only if it changed (keeps the number of caches small)
@@ -151,10 +187,18 @@ jobs:
             file = Sys.getenv("GITHUB_STEP_SUMMARY"),
             append = TRUE
           )
+
+          # One channel failed (the other one worked): fail the run, so that
+          # GitHub reports it, but still save the state (step below)
+          failed <- attr(appointments, "failed_channels")
+          if (length(failed) > 0L) {
+            message("::error::Notification failed for: ", paste(failed, collapse = ", "))
+            quit(status = 1L)
+          }
         shell: Rscript {0}
 
       - name: Save notified appointments
-        if: steps.check.outputs.state_changed == 'true'
+        if: always() && steps.check.outputs.state_changed == 'true'
         uses: actions/cache/save@v6
         with:
           path: .state
