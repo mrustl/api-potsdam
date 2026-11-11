@@ -83,5 +83,5 @@ check_appointments(
 )
 ```
 
-Für die regelmäßige Prüfung alle 5 Minuten siehe den GitHub-Actions-Workflow
+Für die regelmäßige Prüfung alle 6 Minuten siehe den GitHub-Actions-Workflow
 `check-appointments` und die Anleitung in der README.

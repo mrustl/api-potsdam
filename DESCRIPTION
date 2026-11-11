@@ -18,6 +18,8 @@ BugReports: https://github.com/mrustl/api-potsdam/issues
 Depends:
     R (>= 4.1.0)
 Imports:
+    callr,
+    curl,
     httr,
     jsonlite,
     pushoverr

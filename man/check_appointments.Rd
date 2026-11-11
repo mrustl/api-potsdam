@@ -2,12 +2,13 @@
 % Please edit documentation in R/check_appointments.R
 \name{check_appointments}
 \alias{check_appointments}
-\title{Check for Free Appointments and Send a Pushover Notification}
+\title{Check for Free Appointments and Send Notifications}
 \usage{
 check_appointments(
   event_type = "D",
   insurance = "gesetzlich",
   send_pushover_notification = FALSE,
+  send_email_notification = FALSE,
   state_file = NULL,
   priority = 1L,
   from = today_berlin(),
@@ -31,11 +32,14 @@ Default: "D"}
 \item{send_pushover_notification}{should a Pushover notification be sent if
 there are (new) free appointments? Default: \code{FALSE}}
 
+\item{send_email_notification}{should an e-mail be sent if there are (new)
+free appointments? Default: \code{FALSE}}
+
 \item{state_file}{optional path to a text file in which the appointments
 that a notification was already sent for are stored. If given, a
 notification is only sent for appointments that are not yet contained in
 the file, i.e. you are not notified again and again about the same
-appointments. If \code{send_pushover_notification} is \code{TRUE}, the file is
+appointments. If a notification channel is enabled, the file is
 overwritten with the currently free appointments after the notification
 was sent (or if there was nothing new to send). An appointment that
 disappears and becomes free again is therefore reported again.
@@ -63,17 +67,27 @@ Potsdam, i.e. time zone "Europe/Berlin")}
 \value{
 data frame of free appointments as returned by
 \code{\link[=get_free_appointments]{get_free_appointments()}} with an additional logical column \code{is_new}
-(\code{TRUE} if the appointment was not yet contained in \code{state_file})
+(\code{TRUE} if the appointment was not yet contained in \code{state_file}) and
+the attribute \code{failed_channels} (see Details)
 }
 \description{
 Checks the booking calendar of the API Potsdam for free appointments (see
 \code{\link[=get_free_appointments]{get_free_appointments()}}) and sends a notification with the
-\href{https://pushover.net}{Pushover} app if there are any.
+\href{https://pushover.net}{Pushover} app and/or by e-mail if there are any.
 }
 \details{
 The Pushover credentials are read from the environment variables
 \code{PUSHOVER_USER} (your user key) and \code{PUSHOVER_APP} (the API token of your
-Pushover application), see \code{\link[pushoverr:pushover]{pushoverr::pushover()}}.
+Pushover application), see \code{\link[pushoverr:pushover]{pushoverr::pushover()}}. The e-mail settings
+are read from the environment variables \code{SMTP_SERVER}, \code{SMTP_PORT},
+\code{SMTP_USER}, \code{SMTP_PASSWORD}, \code{EMAIL_FROM} and \code{EMAIL_TO}, see
+\code{\link[=send_email]{send_email()}}.
+
+If both channels are used and only one of them fails, the appointments are
+still regarded as notified (no repeated messages on the working channel),
+a warning is given and the names of the failed channels are returned in
+the attribute \code{failed_channels}. If all channels fail, an error is raised
+and \code{state_file} is not changed, so that the notification is tried again.
 }
 \examples{
 \dontrun{
@@ -88,6 +102,19 @@ check_appointments(
   event_type = "D",
   insurance = "gesetzlich",
   send_pushover_notification = TRUE,
+  state_file = "notified-appointments.txt"
+)
+
+# Additionally by e-mail (e.g. IONOS)
+Sys.setenv(
+  SMTP_SERVER = "smtp.ionos.de",
+  SMTP_USER = "me@example.com",
+  SMTP_PASSWORD = "<password>",
+  EMAIL_TO = "me@example.com"
+)
+check_appointments(
+  send_pushover_notification = TRUE,
+  send_email_notification = TRUE,
   state_file = "notified-appointments.txt"
 )
 }

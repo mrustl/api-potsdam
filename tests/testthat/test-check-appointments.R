@@ -295,3 +295,95 @@ test_that("format_notification() mentions every type even if many are free", {
   }
   expect_match(notification$message, "12 Termine|weitere")
 })
+
+test_that("check_appointments() sends e-mails", {
+  withr::local_envvar(
+    SMTP_SERVER = "smtp.example.com", SMTP_USER = "me@example.com",
+    SMTP_PASSWORD = "secret", EMAIL_TO = "me@example.com", EMAIL_FROM = ""
+  )
+  emails <- list()
+  local_mocked_bindings(
+    get_free_appointments = function(...) fake_appointments(),
+    send_email = function(subject, body, ...) {
+      emails[[length(emails) + 1L]] <<- list(subject = subject, body = body)
+    }
+  )
+  state_file <- withr::local_tempfile()
+
+  result <- check_appointments(
+    send_email_notification = TRUE,
+    state_file = state_file,
+    dbg = FALSE
+  )
+
+  expect_length(emails, 1L)
+  expect_identical(emails[[1L]]$subject, "API Potsdam: 2 freie Termine")
+  expect_identical(attr(result, "failed_channels"), character(0L))
+  expect_true(file.exists(state_file))
+
+  # no second e-mail about the same appointments
+  check_appointments(send_email_notification = TRUE, state_file = state_file, dbg = FALSE)
+  expect_length(emails, 1L)
+})
+
+test_that("check_appointments() keeps going if one of two channels fails", {
+  local_pushover_credentials()
+  withr::local_envvar(SMTP_SERVER = "smtp.example.com", SMTP_USER = "me@example.com", EMAIL_TO = "me@example.com")
+  sent <- list()
+  local_mocked_bindings(
+    get_free_appointments = function(...) fake_appointments(),
+    send_pushover = function(...) sent[[length(sent) + 1L]] <<- list(...),
+    send_email = function(...) stop("535 Authentication failed")
+  )
+  state_file <- withr::local_tempfile()
+
+  expect_warning(
+    result <- check_appointments(
+      send_pushover_notification = TRUE,
+      send_email_notification = TRUE,
+      state_file = state_file,
+      dbg = FALSE
+    ),
+    "E-Mail: 535 Authentication failed"
+  )
+
+  expect_length(sent, 1L)
+  expect_identical(attr(result, "failed_channels"), "E-Mail")
+  # the appointments count as notified: no Pushover message again next time
+  expect_true(file.exists(state_file))
+  expect_length(read_state(state_file), 2L)
+})
+
+test_that("check_appointments() keeps the state if all channels fail", {
+  local_pushover_credentials()
+  withr::local_envvar(SMTP_SERVER = "smtp.example.com", SMTP_USER = "me@example.com", EMAIL_TO = "me@example.com")
+  local_mocked_bindings(
+    get_free_appointments = function(...) fake_appointments(),
+    send_pushover = function(...) stop("Pushover is down"),
+    send_email = function(...) stop("SMTP is down")
+  )
+  state_file <- withr::local_tempfile()
+
+  expect_error(
+    check_appointments(
+      send_pushover_notification = TRUE,
+      send_email_notification = TRUE,
+      state_file = state_file,
+      dbg = FALSE
+    ),
+    "Pushover: Pushover is down; E-Mail: SMTP is down"
+  )
+  expect_false(file.exists(state_file))
+})
+
+test_that("check_appointments() fails early without e-mail settings", {
+  withr::local_envvar(SMTP_SERVER = "", EMAIL_TO = "me@example.com")
+  called <- FALSE
+  local_mocked_bindings(get_free_appointments = function(...) {
+    called <<- TRUE
+    empty_appointments()
+  })
+
+  expect_error(check_appointments(send_email_notification = TRUE), "SMTP_SERVER")
+  expect_false(called)
+})

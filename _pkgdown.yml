@@ -16,6 +16,8 @@ reference:
     contents:
       - check_appointments
       - send_test_notification
+      - send_email
+      - send_test_email
   - title: Free appointments
     contents:
       - get_free_appointments
