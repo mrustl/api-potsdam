@@ -1,0 +1,135 @@
+# Checks the booking calendar of the API Potsdam for free appointments and
+# sends a Pushover notification about new ones.
+#
+# Required repository secrets (Settings -> Secrets and variables -> Actions):
+#   PUSHOVER_USER: Pushover user key
+#   PUSHOVER_APP:  API token of a Pushover application
+#
+# Optional repository secrets (kept as secrets, so that the public workflow
+# logs do not show what is checked):
+#   API_POTSDAM_EVENT_TYPE: appointment type(s), comma separated, e.g. the
+#                           slug or samedi id (default: D)
+#   API_POTSDAM_INSURANCE:  health insurance (default: gesetzlich)
+#
+# The logs and the job summary only show the number of free appointments.
+# The details are sent with Pushover.
+
+name: check-appointments
+
+on:
+  schedule:
+    # every 5 minutes, the minimum GitHub allows (runs may start some minutes late)
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      test_notification:
+        description: 'Send a Pushover test notification first'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-appointments
+  cancel-in-progress: false
+
+jobs:
+  check-appointments:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      PUSHOVER_USER: ${{ secrets.PUSHOVER_USER }}
+      PUSHOVER_APP: ${{ secrets.PUSHOVER_APP }}
+      API_POTSDAM_EVENT_TYPE: ${{ secrets.API_POTSDAM_EVENT_TYPE || 'D' }}
+      API_POTSDAM_INSURANCE: ${{ secrets.API_POTSDAM_INSURANCE || 'gesetzlich' }}
+      STATE_FILE: .state/notified-appointments.txt
+      # UTF-8 locale, so that umlauts in messages and the job summary survive
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"hard"'
+          extra-packages: local::.
+
+      # One state per setting. The settings are hashed, so that the (publicly
+      # listed) cache keys do not show them.
+      - name: Cache key for notified appointments
+        id: state-key
+        run: |
+          settings=$(printf '%s|%s' "$API_POTSDAM_EVENT_TYPE" "$API_POTSDAM_INSURANCE" | sha256sum | cut -c1-16)
+          echo "prefix=notified-appointments-${settings}-" >> "$GITHUB_OUTPUT"
+
+      # Appointments that a notification was already sent for
+      - name: Restore notified appointments
+        uses: actions/cache/restore@v4
+        with:
+          path: .state
+          key: ${{ steps.state-key.outputs.prefix }}${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: ${{ steps.state-key.outputs.prefix }}
+
+      - name: Send test notification
+        if: ${{ inputs.test_notification }}
+        run: api.potsdam::send_test_notification()
+        shell: Rscript {0}
+
+      - name: Check for free appointments
+        id: check
+        run: |
+          state_file <- Sys.getenv("STATE_FILE")
+          md5 <- function(file) {
+            if (file.exists(file)) unname(tools::md5sum(file)) else NA_character_
+          }
+          state_before <- md5(state_file)
+
+          appointments <- api.potsdam::check_appointments(
+            event_type = trimws(strsplit(Sys.getenv("API_POTSDAM_EVENT_TYPE"), ",")[[1L]]),
+            insurance = Sys.getenv("API_POTSDAM_INSURANCE"),
+            send_pushover_notification = TRUE,
+            state_file = state_file,
+            dbg = FALSE
+          )
+
+          # Only counts in the public log, no appointment types or times
+          n_new <- sum(appointments$is_new)
+          message(sprintf(
+            "%d free appointment(s), %d new%s",
+            nrow(appointments),
+            n_new,
+            if (n_new > 0L) " (Pushover notification sent)" else ""
+          ))
+
+          # Save the state only if it changed (keeps the number of caches small)
+          cat(
+            sprintf("state_changed=%s\n", tolower(!identical(state_before, md5(state_file)))),
+            file = Sys.getenv("GITHUB_OUTPUT"),
+            append = TRUE
+          )
+
+          # Job summary (public): only counts
+          cat(
+            sprintf(
+              "## API Potsdam\n\nFreie Termine: %d, davon neu: %d\n",
+              nrow(appointments),
+              n_new
+            ),
+            file = Sys.getenv("GITHUB_STEP_SUMMARY"),
+            append = TRUE
+          )
+        shell: Rscript {0}
+
+      - name: Save notified appointments
+        if: steps.check.outputs.state_changed == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .state
+          key: ${{ steps.state-key.outputs.prefix }}${{ github.run_id }}-${{ github.run_attempt }}

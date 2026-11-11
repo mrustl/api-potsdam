@@ -1,0 +1,87 @@
+---
+title: "Freie Termine beim API Potsdam"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Freie Termine beim API Potsdam}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+# Requests to the samedi booking API are only sent if API_POTSDAM_LIVE is
+# "true" (e.g. when the pkgdown website is built), never during R CMD check
+live <- identical(Sys.getenv("API_POTSDAM_LIVE"), "true")
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = live
+)
+```
+
+Die Ambulanz der Akademie für Psychotherapie und Interventionsforschung
+(API) Potsdam vergibt Termine über die Online-Terminbuchung von samedi. Dieses
+Paket fragt den Terminkalender ab, also genau das, was die Buchungsseite im
+Browser auch tut, und meldet sich per Pushover, sobald etwas frei wird.
+
+```{r setup}
+library(api.potsdam)
+```
+
+## Terminarten
+
+Auf der Buchungsseite werden die Terminarten mit Buchstaben (A bis E)
+bezeichnet. Diese Buchstaben können in `get_free_appointments()` und
+`check_appointments()` verwendet werden.
+
+```{r event-types}
+types <- get_event_types(insurance = "gesetzlich")
+types[, c("letter", "name")]
+```
+
+## Freie Termine
+
+Voreingestellt ist "D. Säuglings- u. Kleinkindsprechstunde" für gesetzlich
+Versicherte:
+
+```{r free-appointments}
+get_free_appointments()
+```
+
+Mehrere Terminarten auf einmal:
+
+```{r free-appointments-d-e}
+appointments <- get_free_appointments(event_type = c("A", "D"))
+appointments[, c("event_type", "time")]
+```
+
+```{r timestamp, echo = FALSE, results = "asis"}
+cat(sprintf(
+  "*Stand: %s*",
+  format(Sys.time(), "%d.%m.%Y, %H:%M Uhr", tz = "Europe/Berlin")
+))
+```
+
+## Pushover-Benachrichtigung
+
+`check_appointments()` schickt eine Nachricht mit allen neuen freien
+Terminen und einem direkten Link zur Buchungsseite. Die Zugangsdaten werden
+aus den Umgebungsvariablen `PUSHOVER_USER` und `PUSHOVER_APP` gelesen.
+
+```{r pushover, eval = FALSE}
+Sys.setenv(PUSHOVER_USER = "<dein User Key>", PUSHOVER_APP = "<dein API Token>")
+
+# Testnachricht
+send_test_notification()
+
+# Nur über neue Termine benachrichtigen, nicht bei jeder Prüfung erneut
+check_appointments(
+  event_type = "D",
+  insurance = "gesetzlich",
+  send_pushover_notification = TRUE,
+  state_file = "notified-appointments.txt"
+)
+```
+
+Für die regelmäßige Prüfung alle 5 Minuten siehe den GitHub-Actions-Workflow
+`check-appointments` und die Anleitung in der README.
